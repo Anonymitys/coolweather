@@ -2,6 +2,8 @@ package ecnu.coolweather.util;
 
 import android.text.TextUtils;
 
+import com.google.gson.Gson;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,6 +11,7 @@ import org.json.JSONObject;
 import ecnu.coolweather.db.City;
 import ecnu.coolweather.db.County;
 import ecnu.coolweather.db.Province;
+import ecnu.coolweather.gson.Weather;
 
 /**
  * Created by lynn_ on 2018/1/25.
@@ -72,5 +75,16 @@ public class Utility {
             }
         }
         return false;
+    }
+    public static Weather handleWeatherResponse(String response){
+        try{
+            JSONObject jsonObject=new JSONObject(response);
+            JSONArray jsonArray=jsonObject.getJSONArray("HeWeather");
+            String weatherContent=jsonArray.getJSONObject(0).toString();
+            return new Gson().fromJson(weatherContent,Weather.class);
+        }catch(Exception ex){
+            ex.printStackTrace();
+        }
+        return null;
     }
 }

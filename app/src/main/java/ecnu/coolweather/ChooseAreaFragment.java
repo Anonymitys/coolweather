@@ -1,11 +1,15 @@
 package ecnu.coolweather;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,6 +29,7 @@ import java.util.List;
 import ecnu.coolweather.db.City;
 import ecnu.coolweather.db.County;
 import ecnu.coolweather.db.Province;
+import ecnu.coolweather.gson.Weather;
 import ecnu.coolweather.util.HttpUtil;
 import ecnu.coolweather.util.Utility;
 import okhttp3.Call;
@@ -78,6 +83,20 @@ public class ChooseAreaFragment extends Fragment {
                 }else if(currentLevel==LEVEL_CITY) {
                     selectedCity = cityList.get(position);
                     queryCounties();
+                }else if(currentLevel==LEVEL_COUNTY){
+                    String weatherId=countyList.get(position).getWeatherId();
+                    if(getActivity() instanceof MainActivity){
+                        Intent intent=new Intent(getActivity(),WeatherActivity.class);
+                        intent.putExtra("weather_id",weatherId);
+                        startActivity(intent);
+                    }else if(getActivity() instanceof WeatherActivity){
+                        WeatherActivity activity=(WeatherActivity)getActivity();
+                        activity.drawerLayout.closeDrawers();
+                        activity.swipeRefreshLayout.setRefreshing(true);
+                        activity.requestWeather(weatherId);
+                    }
+
+
                 }
 
             }
@@ -108,7 +127,7 @@ public class ChooseAreaFragment extends Fragment {
             listView.setSelection(0);
             currentLevel=LEVEL_PROVINCE;
         }else {
-            String address="http:guolin.tech/api/china";
+            String address="http://guolin.tech/api/china";
             querryFromSever(address,"province");
         }
     }
@@ -126,13 +145,16 @@ public class ChooseAreaFragment extends Fragment {
             currentLevel=LEVEL_CITY;
         }else {
             int provinceCode=selectedProvince.getProvinceCode();
-            String address="http:guolin.tech/api/china/"+provinceCode;
+            String address="http://guolin.tech/api/china/"+provinceCode;
             querryFromSever(address,"city");
         }
     }
 
     private void queryCounties(){
         titleText.setText(selectedCity.getCityName());
+        Log.i("queryCounties:",String.valueOf(selectedCity.getId()));
+        Log.i("queryCounties: ",String.valueOf(selectedCity.getCityCode()));
+
         backButton.setVisibility(View.VISIBLE);
         countyList=DataSupport.where("cityid=?",String.valueOf(selectedCity.getId())).find(County.class);
         if(countyList.size()>0){
@@ -146,7 +168,7 @@ public class ChooseAreaFragment extends Fragment {
         }else {
             int provinceCode=selectedProvince.getProvinceCode();
             int cityCode=selectedCity.getCityCode();
-            String address="http:guolin.tech/api/china/"+provinceCode+"/"+cityCode;
+            String address="http://guolin.tech/api/china/"+provinceCode+"/"+cityCode;
             querryFromSever(address,"county");
         }
     }
@@ -209,4 +231,6 @@ public class ChooseAreaFragment extends Fragment {
             progressDialog.dismiss();
         }
     }
+
+
 }
